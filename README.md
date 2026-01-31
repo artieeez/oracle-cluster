@@ -50,7 +50,7 @@ oci ce cluster create-kubeconfig \
   --file $HOME/.kube/config \
   --region us-ashburn-1 \
   --token-version 2.0.0 \
-  --kube-endpoint PUBLIC_ENDPOINT
+  --kube-endpoint PRIVATE_ENDPOINT
 ```
 
 Test access:
@@ -58,6 +58,8 @@ Test access:
 ```
 kubectl get nodes
 ```
+
+If using a bastion with port forwarding, set the kubeconfig server to `https://127.0.0.1:6443` and use the SSH tunnel from the bastion session before running `kubectl`.
 
 Rename the context to something memorable:
 

@@ -45,6 +45,23 @@ variable "private_subnet_cidr" {
   default     = "10.0.1.0/24"
 }
 
+variable "bastion_subnet_cidr" {
+  description = "Bastion subnet CIDR block."
+  type        = string
+  default     = "10.0.2.0/24"
+}
+
+variable "bastion_allowed_cidrs" {
+  description = "CIDR allowlist for bastion sessions."
+  type        = list(string)
+  default     = []
+}
+
+variable "bastion_ssh_public_key_path" {
+  description = "Path to the SSH public key for bastion sessions."
+  type        = string
+}
+
 variable "api_allowed_cidrs" {
   description = "Additional CIDR blocks allowed to access the Kubernetes API endpoint."
   type        = list(string)

@@ -1,3 +1,6 @@
 ssh_public_key_path = "/Users/USERNAME/.ssh/id_ed25519.pub"
+bastion_ssh_public_key_path = "/Users/USERNAME/.ssh/id_ed25519.pub"
+
+bastion_allowed_cidrs = ["YOUR.PUBLIC.IP/32"]
 
 tenancy_ocid = "ocid1.tenancy.oc1..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
