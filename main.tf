@@ -37,6 +37,29 @@ resource "oci_core_vcn" "oke" {
   dns_label      = "okevcn"
 }
 
+resource "oci_core_security_list" "public_api" {
+  compartment_id = var.tenancy_ocid
+  display_name   = "${var.cluster_name}-public-api-sl"
+  vcn_id         = oci_core_vcn.oke.id
+
+  egress_security_rules {
+    destination      = "0.0.0.0/0"
+    destination_type = "CIDR_BLOCK"
+    protocol         = "all"
+  }
+
+  ingress_security_rules {
+    protocol    = "6"
+    source      = var.vcn_cidr
+    source_type = "CIDR_BLOCK"
+
+    tcp_options {
+      min = 6443
+      max = 6443
+    }
+  }
+}
+
 resource "oci_core_internet_gateway" "oke" {
   compartment_id = var.tenancy_ocid
   display_name   = "${var.cluster_name}-igw"
@@ -97,6 +120,7 @@ resource "oci_core_subnet" "public" {
   dns_label                  = "public"
   prohibit_public_ip_on_vnic = false
   route_table_id             = oci_core_route_table.public.id
+  security_list_ids          = [oci_core_vcn.oke.default_security_list_id, oci_core_security_list.public_api.id]
   vcn_id                     = oci_core_vcn.oke.id
 }
 
