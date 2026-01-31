@@ -2,6 +2,20 @@
 
 This repository contains Terraform code to create an OKE cluster with a node pool in the Oracle Cloud Infrastructure (OCI).
 
+## Setup summary
+Setting up the cluster consists of:
+
+Prerequisites:
+- Oracle Cloud account in `us-ashburn-1`
+- Terraform installed
+- OCI CLI installed
+
+Steps:
+- Fill `terraform.tfvars`
+- Run `terraform init`
+- Apply resources with `terraform apply`
+- Set up bastion and kubectl access
+
 ## Authentication (recommended)
 Use the OCI CLI to create the `~/.oci/config` profile and keys that Terraform uses.
 
@@ -26,3 +40,30 @@ terraform plan \
   -var 'api_allowed_cidrs=["YOUR.IP/32"]' \
   -var 'ssh_allowed_cidrs=["YOUR.IP/32"]'
 ```
+
+## Configure kubectl
+Generate kubeconfig using the cluster output:
+
+```
+oci ce cluster create-kubeconfig \
+  --cluster-id <cluster_ocid> \
+  --file $HOME/.kube/config \
+  --region us-ashburn-1 \
+  --token-version 2.0.0 \
+  --kube-endpoint PUBLIC_ENDPOINT
+```
+
+Test access:
+
+```
+kubectl get nodes
+```
+
+Rename the context to something memorable:
+
+```
+kubectl config rename-context <old_context_name> <new_context_name>
+```
+
+## Additional documentation
+- https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengsettingupbastion.htm
