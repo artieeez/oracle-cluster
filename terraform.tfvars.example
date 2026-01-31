@@ -1,0 +1,3 @@
+ssh_public_key_path = "/Users/USERNAME/.ssh/id_ed25519.pub"
+
+tenancy_ocid = "ocid1.tenancy.oc1..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
