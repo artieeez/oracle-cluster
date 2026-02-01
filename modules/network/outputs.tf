@@ -17,3 +17,8 @@ output "reserved_public_ip_id" {
   description = "Reserved public IP OCID for Traefik."
   value       = oci_core_public_ip.reserved.id
 }
+
+output "reserved_public_ip_address" {
+  description = "Reserved public IP address for Traefik."
+  value       = oci_core_public_ip.reserved.ip_address
+}

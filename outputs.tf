@@ -27,3 +27,8 @@ output "reserved_public_ip_id" {
   description = "Reserved public IP OCID for Traefik."
   value       = module.network.reserved_public_ip_id
 }
+
+output "reserved_public_ip_address" {
+  description = "Reserved public IP address for Traefik."
+  value       = module.network.reserved_public_ip_address
+}
