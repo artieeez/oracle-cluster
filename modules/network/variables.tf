@@ -23,7 +23,7 @@ variable "private_subnet_cidr" {
   type        = string
 }
 
-variable "bastion_subnet_cidr" {
-  description = "Bastion subnet CIDR block."
-  type        = string
+variable "api_public_allowed_cidrs" {
+  description = "CIDR blocks allowed to access the public Kubernetes API endpoint."
+  type        = list(string)
 }

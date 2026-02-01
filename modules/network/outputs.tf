@@ -12,8 +12,3 @@ output "private_subnet_id" {
   description = "Private subnet OCID."
   value       = oci_core_subnet.private.id
 }
-
-output "bastion_subnet_id" {
-  description = "Bastion subnet OCID."
-  value       = oci_core_subnet.bastion.id
-}

@@ -1,22 +1,14 @@
 ssh_public_key_path = "/Users/USERNAME/.ssh/id_ed25519.pub"
 
-bastion_ssh_public_key_path = "/Users/USERNAME/.ssh/id_ed25519.pub"
-
-bastion_allowed_cidrs = ["YOUR.PUBLIC.IP/32"]
-
 tenancy_ocid = "ocid1.tenancy.oc1..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
-iam_admin_group_name = "Administrators"
-
-iam_tenancy_name = "tenancy"
-
-home_region = "sa-vinhedo-1"
+# Restrict public API endpoint access
+api_public_allowed_cidrs = ["YOUR.PUBLIC.IP/32"]
 
 # Optional overrides to avoid CIDR overlap
 vcn_cidr            = "10.0.0.0/16"
 public_subnet_cidr  = "10.0.0.0/24"
 private_subnet_cidr = "10.0.1.0/24"
-bastion_subnet_cidr = "10.0.2.0/24"
 
 # Deploy to another region if needed
 region = "us-ashburn-1"

@@ -24,42 +24,17 @@ resource "oci_core_security_list" "public_api" {
     protocol         = "all"
   }
 
-  ingress_security_rules {
-    protocol    = "6"
-    source      = var.private_subnet_cidr
-    source_type = "CIDR_BLOCK"
+  dynamic "ingress_security_rules" {
+    for_each = toset(var.api_public_allowed_cidrs)
+    content {
+      protocol    = "6"
+      source      = ingress_security_rules.value
+      source_type = "CIDR_BLOCK"
 
-    tcp_options {
-      min = 6443
-      max = 6443
-    }
-  }
-
-  ingress_security_rules {
-    protocol    = "6"
-    source      = var.bastion_subnet_cidr
-    source_type = "CIDR_BLOCK"
-
-    tcp_options {
-      min = 6443
-      max = 6443
-    }
-  }
-}
-
-resource "oci_core_security_list" "bastion" {
-  compartment_id = var.tenancy_ocid
-  display_name   = "${var.cluster_name}-bastion-sl"
-  vcn_id         = oci_core_vcn.oke.id
-
-  egress_security_rules {
-    destination      = var.private_subnet_cidr
-    destination_type = "CIDR_BLOCK"
-    protocol         = "6"
-
-    tcp_options {
-      min = 6443
-      max = 6443
+      tcp_options {
+        min = 6443
+        max = 6443
+      }
     }
   }
 }
@@ -124,7 +99,7 @@ resource "oci_core_subnet" "public" {
   dns_label                  = "public"
   prohibit_public_ip_on_vnic = false
   route_table_id             = oci_core_route_table.public.id
-  security_list_ids          = [oci_core_vcn.oke.default_security_list_id]
+  security_list_ids          = [oci_core_vcn.oke.default_security_list_id, oci_core_security_list.public_api.id]
   vcn_id                     = oci_core_vcn.oke.id
 }
 
@@ -135,17 +110,6 @@ resource "oci_core_subnet" "private" {
   dns_label                  = "private"
   prohibit_public_ip_on_vnic = true
   route_table_id             = oci_core_route_table.private.id
-  security_list_ids          = [oci_core_vcn.oke.default_security_list_id, oci_core_security_list.public_api.id]
-  vcn_id                     = oci_core_vcn.oke.id
-}
-
-resource "oci_core_subnet" "bastion" {
-  cidr_block                 = var.bastion_subnet_cidr
-  compartment_id             = var.tenancy_ocid
-  display_name               = "${var.cluster_name}-bastion-subnet"
-  dns_label                  = "bastion"
-  prohibit_public_ip_on_vnic = false
-  route_table_id             = oci_core_route_table.public.id
-  security_list_ids          = [oci_core_vcn.oke.default_security_list_id, oci_core_security_list.bastion.id]
+  security_list_ids          = [oci_core_vcn.oke.default_security_list_id]
   vcn_id                     = oci_core_vcn.oke.id
 }

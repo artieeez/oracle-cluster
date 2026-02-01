@@ -14,7 +14,7 @@ Steps:
 - Fill `terraform.tfvars`
 - Run `terraform init`
 - Apply resources with `terraform apply`
-- Set up bastion and kubectl access
+- Configure kubectl access
 
 ## Authentication (recommended)
 Use the OCI CLI to create the `~/.oci/config` profile and keys that Terraform uses.
@@ -37,7 +37,7 @@ terraform init
 terraform plan \
   -var tenancy_ocid="ocid1.tenancy..." \
   -var ssh_public_key_path="$HOME/.ssh/id_rsa.pub" \
-  -var 'bastion_allowed_cidrs=["YOUR.IP/32"]' \
+  -var 'api_public_allowed_cidrs=["YOUR.IP/32"]' \
   -var 'ssh_allowed_cidrs=["YOUR.IP/32"]' \
   -var region="sa-vinhedo-1"
 ```
@@ -51,30 +51,14 @@ oci ce cluster create-kubeconfig \
   --file $HOME/.kube/config \
   --region <region> \
   --token-version 2.0.0 \
-  --kube-endpoint PRIVATE_ENDPOINT
+  --kube-endpoint PUBLIC_ENDPOINT
 ```
-
-This project provisions an OCI Bastion Service in the public subnet and keeps
-the Kubernetes API endpoint private. Access to the API is only allowed from the
-bastion subnet and worker nodes inside the VCN. Use the bastion session to set
-up a local port forward before running `kubectl`.
-
-Get the bastion SSH command:
-
-```
-terraform output -raw bastion_session_get_command
-```
-
-Run the command it prints to open the tunnel, then set the kubeconfig server to
-`https://127.0.0.1:6443`.
 
 Test access:
 
 ```
 kubectl get nodes
 ```
-
-If using a bastion with port forwarding, set the kubeconfig server to `https://127.0.0.1:6443` and use the SSH tunnel from the bastion session before running `kubectl`.
 
 Rename the context to something memorable:
 
@@ -83,4 +67,4 @@ kubectl config rename-context <old_context_name> <new_context_name>
 ```
 
 ## Additional documentation
-- https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengsettingupbastion.htm
+- https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengcreatingclusterkm.htm

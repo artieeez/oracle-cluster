@@ -8,7 +8,6 @@ variable "region" {
   type        = string
   default     = "us-ashburn-1"
 }
-
 variable "home_region" {
   description = "OCI home region for identity operations (policies)."
   type        = string
@@ -51,38 +50,16 @@ variable "private_subnet_cidr" {
   default     = "10.0.1.0/24"
 }
 
-variable "bastion_subnet_cidr" {
-  description = "Bastion subnet CIDR block."
-  type        = string
-  default     = "10.0.2.0/24"
-}
-
-variable "bastion_allowed_cidrs" {
-  description = "CIDR allowlist for bastion sessions."
-  type        = list(string)
-  default     = []
-}
-
-variable "bastion_ssh_public_key_path" {
-  description = "Path to the SSH public key for bastion sessions."
-  type        = string
-}
-
-variable "iam_admin_group_name" {
-  description = "IAM group name for bastion permissions."
-  type        = string
-  default     = "Administrators"
-}
-
-variable "iam_tenancy_name" {
-  description = "Tenancy name used in IAM policy statements."
-  type        = string
-}
-
 variable "ssh_allowed_cidrs" {
   description = "CIDR blocks allowed to SSH into nodes."
   type        = list(string)
   default     = []
+}
+
+variable "api_public_allowed_cidrs" {
+  description = "CIDR blocks allowed to access the public Kubernetes API endpoint."
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
 }
 
 variable "ssh_public_key_path" {

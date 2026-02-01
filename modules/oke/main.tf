@@ -44,11 +44,42 @@ resource "oci_core_network_security_group_security_rule" "endpoint_from_nodes" {
   }
 }
 
-resource "oci_core_network_security_group_security_rule" "endpoint_from_bastion" {
+resource "oci_core_network_security_group_security_rule" "endpoint_from_nodes_kube_proxy" {
   network_security_group_id = oci_core_network_security_group.endpoint.id
   direction                 = "INGRESS"
   protocol                  = "6"
-  source                    = var.bastion_subnet_cidr
+  source                    = oci_core_network_security_group.nodes.id
+  source_type               = "NETWORK_SECURITY_GROUP"
+
+  tcp_options {
+    destination_port_range {
+      min = 12250
+      max = 12250
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "nodes_from_endpoint_kube_proxy" {
+  network_security_group_id = oci_core_network_security_group.nodes.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = oci_core_network_security_group.endpoint.id
+  source_type               = "NETWORK_SECURITY_GROUP"
+
+  tcp_options {
+    destination_port_range {
+      min = 12250
+      max = 12250
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "endpoint_from_public" {
+  for_each                  = toset(var.api_public_allowed_cidrs)
+  network_security_group_id = oci_core_network_security_group.endpoint.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = each.value
   source_type               = "CIDR_BLOCK"
 
   tcp_options {
@@ -106,8 +137,8 @@ resource "oci_containerengine_cluster" "oke" {
   vcn_id             = var.vcn_id
 
   endpoint_config {
-    is_public_ip_enabled = false
-    subnet_id            = var.private_subnet_id
+    is_public_ip_enabled = true
+    subnet_id            = var.public_subnet_id
     nsg_ids              = [oci_core_network_security_group.endpoint.id]
   }
 
@@ -126,7 +157,7 @@ resource "oci_containerengine_node_pool" "oke" {
 
   node_shape_config {
     ocpus         = 2
-    memory_in_gbs = 6
+    memory_in_gbs = 12
   }
 
   node_source_details {
