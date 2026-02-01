@@ -22,3 +22,8 @@ output "cluster_private_endpoint" {
   description = "Private Kubernetes API endpoint."
   value       = module.oke.cluster_private_endpoint
 }
+
+output "reserved_public_ip_id" {
+  description = "Reserved public IP OCID for Traefik."
+  value       = module.network.reserved_public_ip_id
+}

@@ -12,3 +12,8 @@ output "private_subnet_id" {
   description = "Private subnet OCID."
   value       = oci_core_subnet.private.id
 }
+
+output "reserved_public_ip_id" {
+  description = "Reserved public IP OCID for Traefik."
+  value       = oci_core_public_ip.reserved.id
+}

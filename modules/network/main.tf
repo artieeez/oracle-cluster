@@ -113,3 +113,9 @@ resource "oci_core_subnet" "private" {
   security_list_ids          = [oci_core_vcn.oke.default_security_list_id]
   vcn_id                     = oci_core_vcn.oke.id
 }
+
+resource "oci_core_public_ip" "reserved" {
+  compartment_id = var.tenancy_ocid
+  display_name   = "${var.cluster_name}-traefik-reserved-ip"
+  lifetime       = "RESERVED"
+}
