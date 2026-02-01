@@ -24,6 +24,28 @@ resource "oci_core_security_list" "public_api" {
     protocol         = "all"
   }
 
+  ingress_security_rules {
+    protocol    = "6"
+    source      = "0.0.0.0/0"
+    source_type = "CIDR_BLOCK"
+
+    tcp_options {
+      min = 80
+      max = 80
+    }
+  }
+
+  ingress_security_rules {
+    protocol    = "6"
+    source      = "0.0.0.0/0"
+    source_type = "CIDR_BLOCK"
+
+    tcp_options {
+      min = 443
+      max = 443
+    }
+  }
+
   dynamic "ingress_security_rules" {
     for_each = toset(var.api_public_allowed_cidrs)
     content {
@@ -35,6 +57,29 @@ resource "oci_core_security_list" "public_api" {
         min = 6443
         max = 6443
       }
+    }
+  }
+}
+
+resource "oci_core_security_list" "nodeports" {
+  compartment_id = var.tenancy_ocid
+  display_name   = "${var.cluster_name}-nodeports-sl"
+  vcn_id         = oci_core_vcn.oke.id
+
+  egress_security_rules {
+    destination      = "0.0.0.0/0"
+    destination_type = "CIDR_BLOCK"
+    protocol         = "all"
+  }
+
+  ingress_security_rules {
+    protocol    = "6"
+    source      = "0.0.0.0/0"
+    source_type = "CIDR_BLOCK"
+
+    tcp_options {
+      min = 30000
+      max = 32767
     }
   }
 }
@@ -110,7 +155,7 @@ resource "oci_core_subnet" "private" {
   dns_label                  = "private"
   prohibit_public_ip_on_vnic = true
   route_table_id             = oci_core_route_table.private.id
-  security_list_ids          = [oci_core_vcn.oke.default_security_list_id]
+  security_list_ids          = [oci_core_vcn.oke.default_security_list_id, oci_core_security_list.nodeports.id]
   vcn_id                     = oci_core_vcn.oke.id
 }
 

@@ -38,6 +38,11 @@ variable "public_subnet_id" {
   type        = string
 }
 
+variable "public_subnet_cidr" {
+  description = "Public subnet CIDR block."
+  type        = string
+}
+
 variable "private_subnet_id" {
   description = "Private subnet OCID."
   type        = string

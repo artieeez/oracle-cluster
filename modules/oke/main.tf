@@ -106,6 +106,21 @@ resource "oci_core_network_security_group_security_rule" "nodes_from_vcn" {
   source_type               = "CIDR_BLOCK"
 }
 
+resource "oci_core_network_security_group_security_rule" "nodes_from_public_subnet_nodeports" {
+  network_security_group_id = oci_core_network_security_group.nodes.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+
+  tcp_options {
+    destination_port_range {
+      min = 30000
+      max = 32767
+    }
+  }
+}
+
 resource "oci_core_network_security_group_security_rule" "nodes_ssh" {
   for_each                  = toset(var.ssh_allowed_cidrs)
   network_security_group_id = oci_core_network_security_group.nodes.id
