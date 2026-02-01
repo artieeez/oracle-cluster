@@ -32,3 +32,18 @@ output "bastion_session_id" {
   description = "Bastion session OCID for API port forwarding."
   value       = module.bastion.bastion_session_id
 }
+
+output "bastion_session_get_command" {
+  description = "Command to fetch the SSH metadata for the bastion session."
+  value       = "oci bastion session get --session-id ${module.bastion.bastion_session_id} --query 'data.ssh-metadata.command' --raw-output"
+}
+
+output "cluster_private_endpoint_ip" {
+  description = "Private Kubernetes API endpoint IP."
+  value       = local.private_endpoint_ip
+}
+
+output "cluster_private_endpoint_port" {
+  description = "Private Kubernetes API endpoint port."
+  value       = local.private_endpoint_port
+}

@@ -6,7 +6,7 @@ This repository contains Terraform code to create an OKE cluster with a node poo
 Setting up the cluster consists of:
 
 Prerequisites:
-- Oracle Cloud account in `us-ashburn-1`
+- Oracle Cloud account in your target region
 - Terraform installed
 - OCI CLI installed
 
@@ -37,8 +37,9 @@ terraform init
 terraform plan \
   -var tenancy_ocid="ocid1.tenancy..." \
   -var ssh_public_key_path="$HOME/.ssh/id_rsa.pub" \
-  -var 'api_allowed_cidrs=["YOUR.IP/32"]' \
-  -var 'ssh_allowed_cidrs=["YOUR.IP/32"]'
+  -var 'bastion_allowed_cidrs=["YOUR.IP/32"]' \
+  -var 'ssh_allowed_cidrs=["YOUR.IP/32"]' \
+  -var region="sa-vinhedo-1"
 ```
 
 ## Configure kubectl
@@ -48,10 +49,24 @@ Generate kubeconfig using the cluster output:
 oci ce cluster create-kubeconfig \
   --cluster-id <cluster_ocid> \
   --file $HOME/.kube/config \
-  --region us-ashburn-1 \
+  --region <region> \
   --token-version 2.0.0 \
   --kube-endpoint PRIVATE_ENDPOINT
 ```
+
+This project provisions an OCI Bastion Service in the public subnet and keeps
+the Kubernetes API endpoint private. Access to the API is only allowed from the
+bastion subnet and worker nodes inside the VCN. Use the bastion session to set
+up a local port forward before running `kubectl`.
+
+Get the bastion SSH command:
+
+```
+terraform output -raw bastion_session_get_command
+```
+
+Run the command it prints to open the tunnel, then set the kubeconfig server to
+`https://127.0.0.1:6443`.
 
 Test access:
 

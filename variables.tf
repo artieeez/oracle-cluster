@@ -79,12 +79,6 @@ variable "iam_tenancy_name" {
   type        = string
 }
 
-variable "api_allowed_cidrs" {
-  description = "Additional CIDR blocks allowed to access the Kubernetes API endpoint."
-  type        = list(string)
-  default     = []
-}
-
 variable "ssh_allowed_cidrs" {
   description = "CIDR blocks allowed to SSH into nodes."
   type        = list(string)
