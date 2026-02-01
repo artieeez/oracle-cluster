@@ -53,7 +53,7 @@ resource "oci_core_security_list" "bastion" {
   vcn_id         = oci_core_vcn.oke.id
 
   egress_security_rules {
-    destination      = var.public_subnet_cidr
+    destination      = var.private_subnet_cidr
     destination_type = "CIDR_BLOCK"
     protocol         = "6"
 
@@ -124,7 +124,7 @@ resource "oci_core_subnet" "public" {
   dns_label                  = "public"
   prohibit_public_ip_on_vnic = false
   route_table_id             = oci_core_route_table.public.id
-  security_list_ids          = [oci_core_vcn.oke.default_security_list_id, oci_core_security_list.public_api.id]
+  security_list_ids          = [oci_core_vcn.oke.default_security_list_id]
   vcn_id                     = oci_core_vcn.oke.id
 }
 
@@ -135,6 +135,7 @@ resource "oci_core_subnet" "private" {
   dns_label                  = "private"
   prohibit_public_ip_on_vnic = true
   route_table_id             = oci_core_route_table.private.id
+  security_list_ids          = [oci_core_vcn.oke.default_security_list_id, oci_core_security_list.public_api.id]
   vcn_id                     = oci_core_vcn.oke.id
 }
 

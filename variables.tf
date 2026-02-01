@@ -9,6 +9,12 @@ variable "region" {
   default     = "us-ashburn-1"
 }
 
+variable "home_region" {
+  description = "OCI home region for identity operations (policies)."
+  type        = string
+  default     = "sa-vinhedo-1"
+}
+
 variable "oci_profile" {
   description = "Profile name in ~/.oci/config."
   type        = string
@@ -59,6 +65,17 @@ variable "bastion_allowed_cidrs" {
 
 variable "bastion_ssh_public_key_path" {
   description = "Path to the SSH public key for bastion sessions."
+  type        = string
+}
+
+variable "iam_admin_group_name" {
+  description = "IAM group name for bastion permissions."
+  type        = string
+  default     = "Administrators"
+}
+
+variable "iam_tenancy_name" {
+  description = "Tenancy name used in IAM policy statements."
   type        = string
 }
 

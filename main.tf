@@ -3,6 +3,12 @@ provider "oci" {
   config_file_profile = var.oci_profile
 }
 
+provider "oci" {
+  alias               = "home"
+  region              = var.home_region
+  config_file_profile = var.oci_profile
+}
+
 module "network" {
   source              = "./modules/network"
   tenancy_ocid        = var.tenancy_ocid

@@ -107,7 +107,7 @@ resource "oci_containerengine_cluster" "oke" {
 
   endpoint_config {
     is_public_ip_enabled = false
-    subnet_id            = var.public_subnet_id
+    subnet_id            = var.private_subnet_id
     nsg_ids              = [oci_core_network_security_group.endpoint.id]
   }
 
