@@ -23,6 +23,11 @@ output "cluster_private_endpoint" {
   value       = module.oke.cluster_private_endpoint
 }
 
+output "public_subnet_id" {
+  description = "Public subnet OCID (use for Traefik NLB subnet annotation)."
+  value       = module.network.public_subnet_id
+}
+
 output "reserved_public_ip_id" {
   description = "Reserved public IP OCID for Traefik."
   value       = module.network.reserved_public_ip_id
