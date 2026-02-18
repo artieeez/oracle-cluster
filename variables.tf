@@ -6,7 +6,7 @@ variable "tenancy_ocid" {
 variable "region" {
   description = "OCI region."
   type        = string
-  default     = "us-ashburn-1"
+  default     = "sa-vinhedo-1"
 }
 variable "home_region" {
   description = "OCI home region for identity operations (policies)."
