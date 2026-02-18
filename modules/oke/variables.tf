@@ -62,3 +62,9 @@ variable "ssh_allowed_cidrs" {
   description = "CIDR blocks allowed to SSH into nodes."
   type        = list(string)
 }
+
+variable "node_boot_volume_size_gbs" {
+  description = "Boot volume size in GB for each node in the pool."
+  type        = number
+  default     = 75
+}

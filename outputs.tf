@@ -32,3 +32,13 @@ output "reserved_public_ip_address" {
   description = "Reserved public IP address for Traefik."
   value       = module.network.reserved_public_ip_address
 }
+
+output "db_volume_id" {
+  description = "OCID of the 50 GB block volume for database use."
+  value       = oci_core_volume.db_volume.id
+}
+
+output "db_volume_availability_domain" {
+  description = "Availability domain of the DB block volume (for attachment)."
+  value       = oci_core_volume.db_volume.availability_domain
+}

@@ -176,8 +176,9 @@ resource "oci_containerengine_node_pool" "oke" {
   }
 
   node_source_details {
-    image_id    = local.node_pool_image_id
-    source_type = "IMAGE"
+    image_id                 = local.node_pool_image_id
+    source_type              = "IMAGE"
+    boot_volume_size_in_gbs   = var.node_boot_volume_size_gbs
   }
 
   node_config_details {

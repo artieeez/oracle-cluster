@@ -72,3 +72,9 @@ variable "node_pool_size" {
   type        = number
   default     = 2
 }
+
+variable "node_boot_volume_size_gbs" {
+  description = "Boot volume size in GB for each OKE node."
+  type        = number
+  default     = 75
+}
