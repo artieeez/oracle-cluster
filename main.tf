@@ -46,4 +46,8 @@ resource "oci_core_volume" "db_volume" {
   availability_domain = data.oci_identity_availability_domains.ads.availability_domains[0].name
   size_in_gbs         = 50
   display_name        = "${var.cluster_name}-db-volume"
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
