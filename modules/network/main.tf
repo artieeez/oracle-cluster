@@ -163,4 +163,10 @@ resource "oci_core_public_ip" "reserved" {
   compartment_id = var.tenancy_ocid
   display_name   = "${var.cluster_name}-traefik-reserved-ip"
   lifetime       = "RESERVED"
+
+  # OCI CCM attaches this IP to the Traefik NLB via the service annotation.
+  # Do not detach it when Terraform runs (ignore drift on attachment).
+  lifecycle {
+    ignore_changes = [private_ip_id]
+  }
 }
