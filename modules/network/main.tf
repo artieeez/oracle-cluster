@@ -30,17 +30,6 @@ resource "oci_core_security_list" "public_api" {
     source_type = "CIDR_BLOCK"
 
     tcp_options {
-      min = 22
-      max = 22
-    }
-  }
-
-  ingress_security_rules {
-    protocol    = "6"
-    source      = "0.0.0.0/0"
-    source_type = "CIDR_BLOCK"
-
-    tcp_options {
       min = 80
       max = 80
     }
