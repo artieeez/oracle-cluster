@@ -78,3 +78,20 @@ variable "node_boot_volume_size_gbs" {
   type        = number
   default     = 75
 }
+
+variable "cost_budget_amount" {
+  description = "Monthly cost budget amount in USD (tripwire)."
+  type        = number
+  default     = 1
+}
+
+variable "cost_alert_email" {
+  description = "Email address to receive budget alerts."
+  type        = string
+}
+
+variable "slack_webhook_url" {
+  description = "Slack Incoming Webhook URL for cost alerts."
+  type        = string
+  sensitive   = true
+}
