@@ -59,6 +59,47 @@ resource "oci_core_security_list" "public_api" {
       }
     }
   }
+
+  # Traefik NLB extra TCP listener (see artr-gitops charts/traefik-values.yaml ports.postgres1).
+  ingress_security_rules {
+    protocol    = "6"
+    source      = "0.0.0.0/0"
+    source_type = "CIDR_BLOCK"
+
+    tcp_options {
+      min = 5435
+      max = 5435
+    }
+  }
+
+  # Pi-hole DNS via same NLB (Traefik dnsudp/dnstcp): restrict sources; no 0.0.0.0/0 rule here.
+  dynamic "ingress_security_rules" {
+    for_each = toset(var.dns_server_allowed_cidrs)
+    content {
+      protocol    = "6"
+      source      = ingress_security_rules.value
+      source_type = "CIDR_BLOCK"
+
+      tcp_options {
+        min = 53
+        max = 53
+      }
+    }
+  }
+
+  dynamic "ingress_security_rules" {
+    for_each = toset(var.dns_server_allowed_cidrs)
+    content {
+      protocol    = "17"
+      source      = ingress_security_rules.value
+      source_type = "CIDR_BLOCK"
+
+      udp_options {
+        min = 53
+        max = 53
+      }
+    }
+  }
 }
 
 resource "oci_core_security_list" "nodeports" {

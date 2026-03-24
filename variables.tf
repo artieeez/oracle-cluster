@@ -62,6 +62,16 @@ variable "api_public_allowed_cidrs" {
   default     = ["0.0.0.0/0"]
 }
 
+variable "dns_server_allowed_cidrs" {
+  description = <<-EOT
+    CIDR blocks allowed to reach TCP/UDP port 53 on the public subnet (Traefik NLB → Pi-hole DNS).
+    HTTP/HTTPS and other NLB ports stay open to 0.0.0.0/0 via the public_api security list.
+    Use your home/public IP with /32 (and VPN CIDRs if needed). Empty list blocks internet DNS to 53 only.
+  EOT
+  type        = list(string)
+  default     = []
+}
+
 variable "ssh_public_key_path" {
   description = "Path to the SSH public key for node access."
   type        = string

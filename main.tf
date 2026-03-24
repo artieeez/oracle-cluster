@@ -21,6 +21,7 @@ module "network" {
   public_subnet_cidr       = var.public_subnet_cidr
   private_subnet_cidr      = var.private_subnet_cidr
   api_public_allowed_cidrs = var.api_public_allowed_cidrs
+  dns_server_allowed_cidrs = var.dns_server_allowed_cidrs
 }
 
 module "oke" {

@@ -5,6 +5,9 @@ tenancy_ocid = "ocid1.tenancy.oc1..XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 # Restrict public API endpoint access
 api_public_allowed_cidrs = ["YOUR.PUBLIC.IP/32"]
 
+# Traefik NLB DNS (Pi-hole on 53): only these CIDRs may query; 80/443 stay public via security list
+dns_server_allowed_cidrs = ["YOUR.PUBLIC.IP/32"]
+
 # Optional overrides to avoid CIDR overlap
 vcn_cidr            = "10.0.0.0/16"
 public_subnet_cidr  = "10.0.0.0/24"
