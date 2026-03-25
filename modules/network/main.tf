@@ -60,15 +60,15 @@ resource "oci_core_security_list" "public_api" {
     }
   }
 
-  # Traefik NLB extra TCP listener (see artr-gitops charts/traefik-values.yaml ports.postgres1).
+  # Traefik PostgreSQL TCP listener.
   ingress_security_rules {
     protocol    = "6"
     source      = "0.0.0.0/0"
     source_type = "CIDR_BLOCK"
 
     tcp_options {
-      min = 5435
-      max = 5435
+      min = 5432
+      max = 5432
     }
   }
 

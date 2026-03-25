@@ -15,6 +15,13 @@ locals {
   kubernetes_version     = var.kubernetes_version == "latest" ? local.available_k8s_versions[length(local.available_k8s_versions) - 1] : var.kubernetes_version
   arm_image_ids          = [for source in data.oci_containerengine_node_pool_option.node_pool_options.sources : source.image_id if can(regex("(arm|aarch64)", lower(source.source_name)))]
   node_pool_image_id     = length(local.arm_image_ids) > 0 ? local.arm_image_ids[0] : data.oci_containerengine_node_pool_option.node_pool_options.sources[0].image_id
+  traefik_node_ports = {
+    web       = 32080
+    websecure = 32443
+    postgres  = 32432
+    dns_udp   = 32053
+    dns_tcp   = 32054
+  }
 }
 
 resource "oci_core_network_security_group" "endpoint" {
@@ -26,6 +33,12 @@ resource "oci_core_network_security_group" "endpoint" {
 resource "oci_core_network_security_group" "nodes" {
   compartment_id = var.tenancy_ocid
   display_name   = "${var.cluster_name}-nodes-nsg"
+  vcn_id         = var.vcn_id
+}
+
+resource "oci_core_network_security_group" "traefik_nlb" {
+  compartment_id = var.tenancy_ocid
+  display_name   = "${var.cluster_name}-traefik-nlb-nsg"
   vcn_id         = var.vcn_id
 }
 
@@ -121,6 +134,106 @@ resource "oci_core_network_security_group_security_rule" "nodes_from_public_subn
   }
 }
 
+resource "oci_core_network_security_group_security_rule" "nodes_from_public_subnet_nodeports_udp" {
+  network_security_group_id = oci_core_network_security_group.nodes.id
+  direction                 = "INGRESS"
+  protocol                  = "17"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+
+  udp_options {
+    destination_port_range {
+      min = 30000
+      max = 32767
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "traefik_nlb_http_ingress" {
+  network_security_group_id = oci_core_network_security_group.traefik_nlb.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+
+  tcp_options {
+    destination_port_range {
+      min = 80
+      max = 80
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "traefik_nlb_https_ingress" {
+  network_security_group_id = oci_core_network_security_group.traefik_nlb.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+
+  tcp_options {
+    destination_port_range {
+      min = 443
+      max = 443
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "traefik_nlb_postgres_ingress" {
+  network_security_group_id = oci_core_network_security_group.traefik_nlb.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+
+  tcp_options {
+    destination_port_range {
+      min = 5432
+      max = 5432
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "traefik_nlb_dns_tcp_ingress" {
+  for_each                  = toset(var.dns_server_allowed_cidrs)
+  network_security_group_id = oci_core_network_security_group.traefik_nlb.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = each.value
+  source_type               = "CIDR_BLOCK"
+
+  tcp_options {
+    destination_port_range {
+      min = 53
+      max = 53
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "traefik_nlb_dns_udp_ingress" {
+  for_each                  = toset(var.dns_server_allowed_cidrs)
+  network_security_group_id = oci_core_network_security_group.traefik_nlb.id
+  direction                 = "INGRESS"
+  protocol                  = "17"
+  source                    = each.value
+  source_type               = "CIDR_BLOCK"
+
+  udp_options {
+    destination_port_range {
+      min = 53
+      max = 53
+    }
+  }
+}
+
+resource "oci_core_network_security_group_security_rule" "traefik_nlb_egress" {
+  network_security_group_id = oci_core_network_security_group.traefik_nlb.id
+  direction                 = "EGRESS"
+  protocol                  = "all"
+  destination               = "0.0.0.0/0"
+  destination_type          = "CIDR_BLOCK"
+}
+
 resource "oci_core_network_security_group_security_rule" "nodes_ssh" {
   for_each                  = toset(var.ssh_allowed_cidrs)
   network_security_group_id = oci_core_network_security_group.nodes.id
@@ -193,4 +306,203 @@ resource "oci_containerengine_node_pool" "oke" {
       }
     }
   }
+}
+
+resource "oci_network_load_balancer_network_load_balancer" "traefik" {
+  compartment_id             = var.tenancy_ocid
+  display_name               = "${var.cluster_name}-traefik-nlb"
+  subnet_id                  = var.public_subnet_id
+  is_private                 = false
+  network_security_group_ids = [oci_core_network_security_group.traefik_nlb.id]
+
+  reserved_ips {
+    id = var.reserved_public_ip_id
+  }
+}
+
+resource "oci_network_load_balancer_backend_set" "traefik_http" {
+  name                     = "traefik-http-backendset"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  policy                   = "FIVE_TUPLE"
+
+  health_checker {
+    protocol = "TCP"
+    port     = local.traefik_node_ports.web
+  }
+
+  depends_on = [oci_network_load_balancer_network_load_balancer.traefik]
+}
+
+resource "oci_network_load_balancer_backend_set" "traefik_https" {
+  name                     = "traefik-https-backendset"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  policy                   = "FIVE_TUPLE"
+
+  health_checker {
+    protocol = "TCP"
+    port     = local.traefik_node_ports.websecure
+  }
+
+  depends_on = [oci_network_load_balancer_backend_set.traefik_http]
+}
+
+resource "oci_network_load_balancer_backend_set" "traefik_postgres" {
+  name                     = "traefik-postgres-backendset"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  policy                   = "FIVE_TUPLE"
+
+  health_checker {
+    protocol = "TCP"
+    port     = local.traefik_node_ports.postgres
+  }
+
+  depends_on = [oci_network_load_balancer_backend_set.traefik_https]
+}
+
+resource "oci_network_load_balancer_backend_set" "traefik_dns_tcp" {
+  name                     = "traefik-dns-tcp-backendset"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  policy                   = "FIVE_TUPLE"
+
+  health_checker {
+    protocol = "TCP"
+    port     = local.traefik_node_ports.dns_tcp
+  }
+
+  depends_on = [oci_network_load_balancer_backend_set.traefik_postgres]
+}
+
+resource "oci_network_load_balancer_backend_set" "traefik_dns_udp" {
+  name                     = "traefik-dns-udp-backendset"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  policy                   = "FIVE_TUPLE"
+
+  # OCI UDP health checks require raw request_data/response_data; the provider dns block is not sent (dns=null).
+  # Probe TCP on the Traefik web NodePort instead: same node/pod must be up for DNS UDP to work.
+  health_checker {
+    protocol = "TCP"
+    port     = local.traefik_node_ports.web
+  }
+
+  depends_on = [oci_network_load_balancer_backend_set.traefik_dns_tcp]
+}
+
+resource "oci_network_load_balancer_backend" "traefik_http_nodes" {
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  backend_set_name         = oci_network_load_balancer_backend_set.traefik_http.name
+  ip_address               = each.value
+  port                     = local.traefik_node_ports.web
+}
+
+resource "oci_network_load_balancer_backend" "traefik_https_nodes" {
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  backend_set_name         = oci_network_load_balancer_backend_set.traefik_https.name
+  ip_address               = each.value
+  port                     = local.traefik_node_ports.websecure
+}
+
+resource "oci_network_load_balancer_backend" "traefik_postgres_nodes" {
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  backend_set_name         = oci_network_load_balancer_backend_set.traefik_postgres.name
+  ip_address               = each.value
+  port                     = local.traefik_node_ports.postgres
+}
+
+resource "oci_network_load_balancer_backend" "traefik_dns_tcp_nodes" {
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  backend_set_name         = oci_network_load_balancer_backend_set.traefik_dns_tcp.name
+  ip_address               = each.value
+  port                     = local.traefik_node_ports.dns_tcp
+}
+
+resource "oci_network_load_balancer_backend" "traefik_dns_udp_nodes" {
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  backend_set_name         = oci_network_load_balancer_backend_set.traefik_dns_udp.name
+  ip_address               = each.value
+  port                     = local.traefik_node_ports.dns_udp
+}
+
+resource "oci_network_load_balancer_listener" "http" {
+  name                     = "http-80"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  default_backend_set_name = oci_network_load_balancer_backend_set.traefik_http.name
+  port                     = 80
+  protocol                 = "TCP"
+
+  depends_on = [
+    oci_network_load_balancer_backend_set.traefik_http,
+    oci_network_load_balancer_backend_set.traefik_https,
+    oci_network_load_balancer_backend_set.traefik_postgres,
+    oci_network_load_balancer_backend_set.traefik_dns_tcp,
+    oci_network_load_balancer_backend_set.traefik_dns_udp
+  ]
+}
+
+resource "oci_network_load_balancer_listener" "https" {
+  name                     = "https-443"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  default_backend_set_name = oci_network_load_balancer_backend_set.traefik_https.name
+  port                     = 443
+  protocol                 = "TCP"
+
+  depends_on = [
+    oci_network_load_balancer_backend_set.traefik_http,
+    oci_network_load_balancer_backend_set.traefik_https,
+    oci_network_load_balancer_backend_set.traefik_postgres,
+    oci_network_load_balancer_backend_set.traefik_dns_tcp,
+    oci_network_load_balancer_backend_set.traefik_dns_udp
+  ]
+}
+
+resource "oci_network_load_balancer_listener" "postgres" {
+  name                     = "postgres-5432"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  default_backend_set_name = oci_network_load_balancer_backend_set.traefik_postgres.name
+  port                     = 5432
+  protocol                 = "TCP"
+
+  depends_on = [
+    oci_network_load_balancer_backend_set.traefik_http,
+    oci_network_load_balancer_backend_set.traefik_https,
+    oci_network_load_balancer_backend_set.traefik_postgres,
+    oci_network_load_balancer_backend_set.traefik_dns_tcp,
+    oci_network_load_balancer_backend_set.traefik_dns_udp
+  ]
+}
+
+resource "oci_network_load_balancer_listener" "dns_tcp" {
+  name                     = "dns-tcp-53"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  default_backend_set_name = oci_network_load_balancer_backend_set.traefik_dns_tcp.name
+  port                     = 53
+  protocol                 = "TCP"
+
+  depends_on = [
+    oci_network_load_balancer_backend_set.traefik_http,
+    oci_network_load_balancer_backend_set.traefik_https,
+    oci_network_load_balancer_backend_set.traefik_postgres,
+    oci_network_load_balancer_backend_set.traefik_dns_tcp,
+    oci_network_load_balancer_backend_set.traefik_dns_udp
+  ]
+}
+
+resource "oci_network_load_balancer_listener" "dns_udp" {
+  name                     = "dns-udp-53"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  default_backend_set_name = oci_network_load_balancer_backend_set.traefik_dns_udp.name
+  port                     = 53
+  protocol                 = "UDP"
+
+  depends_on = [
+    oci_network_load_balancer_backend_set.traefik_http,
+    oci_network_load_balancer_backend_set.traefik_https,
+    oci_network_load_balancer_backend_set.traefik_postgres,
+    oci_network_load_balancer_backend_set.traefik_dns_tcp,
+    oci_network_load_balancer_backend_set.traefik_dns_udp
+  ]
 }

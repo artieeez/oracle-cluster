@@ -47,3 +47,13 @@ output "db_volume_availability_domain" {
   description = "Availability domain of the DB block volume (for attachment)."
   value       = oci_core_volume.db_volume.availability_domain
 }
+
+output "traefik_nlb_id" {
+  description = "OCID of the Terraform-managed Traefik NLB."
+  value       = module.oke.traefik_nlb_id
+}
+
+output "traefik_nlb_public_ip_addresses" {
+  description = "Public IP addresses currently assigned to the Terraform-managed Traefik NLB."
+  value       = module.oke.traefik_nlb_public_ip_addresses
+}

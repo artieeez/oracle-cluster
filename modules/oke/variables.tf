@@ -38,6 +38,11 @@ variable "public_subnet_id" {
   type        = string
 }
 
+variable "reserved_public_ip_id" {
+  description = "Reserved public IP OCID to attach to the Terraform-managed Traefik NLB."
+  type        = string
+}
+
 variable "public_subnet_cidr" {
   description = "Public subnet CIDR block."
   type        = string
@@ -60,6 +65,11 @@ variable "api_public_allowed_cidrs" {
 
 variable "ssh_allowed_cidrs" {
   description = "CIDR blocks allowed to SSH into nodes."
+  type        = list(string)
+}
+
+variable "dns_server_allowed_cidrs" {
+  description = "CIDR blocks allowed to reach DNS listeners (TCP/UDP 53) on the Terraform-managed NLB."
   type        = list(string)
 }
 

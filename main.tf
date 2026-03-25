@@ -35,10 +35,12 @@ module "oke" {
   vcn_id                    = module.network.vcn_id
   vcn_cidr                  = var.vcn_cidr
   public_subnet_id          = module.network.public_subnet_id
+  reserved_public_ip_id     = module.network.reserved_public_ip_id
   public_subnet_cidr        = var.public_subnet_cidr
   private_subnet_id         = module.network.private_subnet_id
   private_subnet_cidr       = var.private_subnet_cidr
   api_public_allowed_cidrs  = var.api_public_allowed_cidrs
+  dns_server_allowed_cidrs  = var.dns_server_allowed_cidrs
   ssh_allowed_cidrs         = var.ssh_allowed_cidrs
 }
 
