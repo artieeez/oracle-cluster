@@ -15,7 +15,7 @@ resource "oci_core_vcn" "oke" {
 
 resource "oci_core_security_list" "public_api" {
   compartment_id = var.tenancy_ocid
-  display_name   = "${var.cluster_name}-public-api-sl"
+  display_name   = "${var.cluster_name}-public-subnet-sl"
   vcn_id         = oci_core_vcn.oke.id
 
   egress_security_rules {
@@ -57,6 +57,67 @@ resource "oci_core_security_list" "public_api" {
         min = 6443
         max = 6443
       }
+    }
+  }
+
+  # Kubernetes control plane ports from worker subnet (K8s reference: ports-and-protocols).
+  ingress_security_rules {
+    protocol    = "6"
+    source      = var.private_subnet_cidr
+    source_type = "CIDR_BLOCK"
+    description = "Kubernetes API server from worker subnet"
+
+    tcp_options {
+      min = 6443
+      max = 6443
+    }
+  }
+
+  ingress_security_rules {
+    protocol    = "6"
+    source      = var.private_subnet_cidr
+    source_type = "CIDR_BLOCK"
+    description = "etcd client API from worker subnet"
+
+    tcp_options {
+      min = 2379
+      max = 2380
+    }
+  }
+
+  ingress_security_rules {
+    protocol    = "6"
+    source      = var.private_subnet_cidr
+    source_type = "CIDR_BLOCK"
+    description = "Kubelet API from worker subnet"
+
+    tcp_options {
+      min = 10250
+      max = 10250
+    }
+  }
+
+  ingress_security_rules {
+    protocol    = "6"
+    source      = var.private_subnet_cidr
+    source_type = "CIDR_BLOCK"
+    description = "kube-scheduler from worker subnet"
+
+    tcp_options {
+      min = 10259
+      max = 10259
+    }
+  }
+
+  ingress_security_rules {
+    protocol    = "6"
+    source      = var.private_subnet_cidr
+    source_type = "CIDR_BLOCK"
+    description = "kube-controller-manager from worker subnet"
+
+    tcp_options {
+      min = 10257
+      max = 10257
     }
   }
 
@@ -104,7 +165,7 @@ resource "oci_core_security_list" "public_api" {
 
 resource "oci_core_security_list" "nodeports" {
   compartment_id = var.tenancy_ocid
-  display_name   = "${var.cluster_name}-nodeports-sl"
+  display_name   = "${var.cluster_name}-private-subnet-sl"
   vcn_id         = oci_core_vcn.oke.id
 
   egress_security_rules {
@@ -115,13 +176,121 @@ resource "oci_core_security_list" "nodeports" {
 
   ingress_security_rules {
     protocol    = "6"
-    source      = "0.0.0.0/0"
+    source      = var.public_subnet_cidr
     source_type = "CIDR_BLOCK"
+    description = "NodePort Services from public subnet"
 
     tcp_options {
       min = 30000
       max = 32767
     }
+  }
+
+  ingress_security_rules {
+    protocol    = "17"
+    source      = var.public_subnet_cidr
+    source_type = "CIDR_BLOCK"
+    description = "NodePort Services UDP from public subnet"
+
+    udp_options {
+      min = 30000
+      max = 32767
+    }
+  }
+
+  ingress_security_rules {
+    protocol    = "6"
+    source      = var.public_subnet_cidr
+    source_type = "CIDR_BLOCK"
+    description = "Kubelet API from control-plane path"
+
+    tcp_options {
+      min = 10250
+      max = 10250
+    }
+  }
+
+  ingress_security_rules {
+    protocol    = "6"
+    source      = var.public_subnet_cidr
+    source_type = "CIDR_BLOCK"
+    description = "kube-proxy from control-plane path"
+
+    tcp_options {
+      min = 10256
+      max = 10256
+    }
+  }
+
+  # Worker subnet egress to control-plane subnet (K8s reference: ports-and-protocols).
+  egress_security_rules {
+    protocol         = "6"
+    destination      = var.public_subnet_cidr
+    destination_type = "CIDR_BLOCK"
+    description      = "Kubernetes API server to control plane"
+
+    tcp_options {
+      min = 6443
+      max = 6443
+    }
+  }
+
+  egress_security_rules {
+    protocol         = "6"
+    destination      = var.public_subnet_cidr
+    destination_type = "CIDR_BLOCK"
+    description      = "etcd client API to control plane"
+
+    tcp_options {
+      min = 2379
+      max = 2380
+    }
+  }
+
+  egress_security_rules {
+    protocol         = "6"
+    destination      = var.public_subnet_cidr
+    destination_type = "CIDR_BLOCK"
+    description      = "Kubelet API to control plane"
+
+    tcp_options {
+      min = 10250
+      max = 10250
+    }
+  }
+
+  egress_security_rules {
+    protocol         = "6"
+    destination      = var.public_subnet_cidr
+    destination_type = "CIDR_BLOCK"
+    description      = "kube-scheduler to control plane"
+
+    tcp_options {
+      min = 10259
+      max = 10259
+    }
+  }
+
+  egress_security_rules {
+    protocol         = "6"
+    destination      = var.public_subnet_cidr
+    destination_type = "CIDR_BLOCK"
+    description      = "kube-controller-manager to control plane"
+
+    tcp_options {
+      min = 10257
+      max = 10257
+    }
+  }
+}
+
+resource "oci_core_default_security_list" "default" {
+  manage_default_resource_id = oci_core_vcn.oke.default_security_list_id
+
+  egress_security_rules {
+    destination      = "0.0.0.0/0"
+    destination_type = "CIDR_BLOCK"
+    protocol         = "all"
   }
 }
 
@@ -185,7 +354,7 @@ resource "oci_core_subnet" "public" {
   dns_label                  = "public"
   prohibit_public_ip_on_vnic = false
   route_table_id             = oci_core_route_table.public.id
-  security_list_ids          = [oci_core_vcn.oke.default_security_list_id, oci_core_security_list.public_api.id]
+  security_list_ids          = [oci_core_default_security_list.default.id, oci_core_security_list.public_api.id]
   vcn_id                     = oci_core_vcn.oke.id
 }
 
@@ -196,7 +365,7 @@ resource "oci_core_subnet" "private" {
   dns_label                  = "private"
   prohibit_public_ip_on_vnic = true
   route_table_id             = oci_core_route_table.private.id
-  security_list_ids          = [oci_core_vcn.oke.default_security_list_id, oci_core_security_list.nodeports.id]
+  security_list_ids          = [oci_core_default_security_list.default.id, oci_core_security_list.nodeports.id]
   vcn_id                     = oci_core_vcn.oke.id
 }
 
