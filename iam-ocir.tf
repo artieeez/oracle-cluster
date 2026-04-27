@@ -5,8 +5,9 @@ resource "oci_identity_dynamic_group" "oke_nodes" {
   name           = "${var.cluster_name}-oke-nodes"
   description    = "Dynamic group for OKE worker instances to pull private images from OCIR."
 
-  # OKE worker nodes are compute instances in this tenancy.
-  matching_rule = "ALL {instance.compartment.id = '${var.tenancy_ocid}'}"
+  # Match all compute instances in the tenancy (broader than compartment-only rules).
+  # Tighten later with instance.compartment.id or defined tags if you add non-OKE instances.
+  matching_rule = "ALL {resource.type = 'instance'}"
 }
 
 resource "oci_identity_policy" "oke_nodes_ocir_pull" {
