@@ -2,6 +2,10 @@ data "oci_identity_availability_domains" "ads" {
   compartment_id = var.tenancy_ocid
 }
 
+data "oci_objectstorage_namespace" "this" {
+  compartment_id = var.tenancy_ocid
+}
+
 provider "oci" {
   region              = var.region
   config_file_profile = var.oci_profile
@@ -53,4 +57,16 @@ resource "oci_core_volume" "db_volume" {
   lifecycle {
     prevent_destroy = true
   }
+}
+
+resource "oci_artifacts_container_repository" "sitio_dashboard" {
+  compartment_id = var.tenancy_ocid
+  display_name   = "sitio-dashboard"
+  is_public      = false
+}
+
+resource "oci_artifacts_container_repository" "sitio_backend" {
+  compartment_id = var.tenancy_ocid
+  display_name   = "sitio-backend"
+  is_public      = false
 }
