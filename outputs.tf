@@ -77,3 +77,18 @@ output "sitio_backend_repository_url" {
   description = "OCI Container Registry repository URL for sitio-backend."
   value       = "${var.region}.ocir.io/${data.oci_objectstorage_namespace.this.namespace}/${oci_artifacts_container_repository.sitio_backend.display_name}"
 }
+
+output "backup_bucket_name" {
+  description = "Name of the Object Storage bucket for PostgreSQL backups."
+  value       = oci_objectstorage_bucket.postgres_backups.name
+}
+
+output "backup_bucket_endpoint" {
+  description = "S3-compatible endpoint for the backup bucket."
+  value       = "${data.oci_objectstorage_namespace.this.namespace}.compat.objectstorage.${var.region}.oci.customer-oci.com"
+}
+
+output "backup_bucket_namespace" {
+  description = "Object Storage namespace for S3-compatible API access."
+  value       = data.oci_objectstorage_namespace.this.namespace
+}

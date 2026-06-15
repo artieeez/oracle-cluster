@@ -105,3 +105,17 @@ variable "slack_webhook_url" {
   type        = string
   sensitive   = true
 }
+
+variable "backup_bucket_name" {
+  description = "Name of the Object Storage bucket for PostgreSQL backups."
+  type        = string
+  default     = "sitio-production-backups"
+}
+
+variable "backup_retention_days" {
+  description = "Number of days to retain backup objects before automatic deletion."
+  type        = number
+  default     = 90
+}
+
+

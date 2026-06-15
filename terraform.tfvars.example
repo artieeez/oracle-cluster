@@ -15,3 +15,7 @@ private_subnet_cidr = "10.0.1.0/24"
 
 # Deploy to another region if needed
 region = "us-ashburn-1"
+
+# PostgreSQL backup bucket configuration
+backup_bucket_name    = "sitio-production-backups"
+backup_retention_days = 90
