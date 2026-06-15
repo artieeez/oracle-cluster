@@ -16,6 +16,9 @@ private_subnet_cidr = "10.0.1.0/24"
 # Deploy to another region if needed
 region = "us-ashburn-1"
 
+# OKE worker nodes (shape: VM.Standard.A1.Flex, 2 OCPU / 12 GB each in modules/oke)
+node_pool_size = 1
+
 # PostgreSQL backup bucket configuration
 backup_bucket_name    = "sitio-production-backups"
 backup_retention_days = 90

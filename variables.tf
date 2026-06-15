@@ -80,7 +80,7 @@ variable "ssh_public_key_path" {
 variable "node_pool_size" {
   description = "Number of nodes in the pool."
   type        = number
-  default     = 2
+  default     = 1
 }
 
 variable "node_boot_volume_size_gbs" {
