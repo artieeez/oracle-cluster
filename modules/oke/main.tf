@@ -418,7 +418,7 @@ resource "oci_network_load_balancer_backend_set" "traefik_dot_tcp" {
 }
 
 resource "oci_network_load_balancer_backend" "traefik_http_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_http.name
   ip_address               = each.value
@@ -426,43 +426,54 @@ resource "oci_network_load_balancer_backend" "traefik_http_nodes" {
 }
 
 resource "oci_network_load_balancer_backend" "traefik_https_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_https.name
   ip_address               = each.value
   port                     = local.traefik_node_ports.websecure
+
+  # OCI NLB allows only one backend mutation at a time.
+  depends_on = [oci_network_load_balancer_backend.traefik_http_nodes]
 }
 
 resource "oci_network_load_balancer_backend" "traefik_postgres_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_postgres.name
   ip_address               = each.value
   port                     = local.traefik_node_ports.postgres
+
+  depends_on = [oci_network_load_balancer_backend.traefik_https_nodes]
 }
 
 resource "oci_network_load_balancer_backend" "traefik_dns_tcp_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_dns_tcp.name
   ip_address               = each.value
   port                     = local.traefik_node_ports.dns_tcp
+
+  depends_on = [oci_network_load_balancer_backend.traefik_postgres_nodes]
 }
 
 resource "oci_network_load_balancer_backend" "traefik_dns_udp_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_dns_udp.name
   ip_address               = each.value
   port                     = local.traefik_node_ports.dns_udp
+
+  depends_on = [oci_network_load_balancer_backend.traefik_dns_tcp_nodes]
 }
 
 resource "oci_network_load_balancer_backend" "traefik_dot_tcp_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_dot_tcp.name
   ip_address               = each.value
   port                     = local.traefik_node_ports.dot_tcp
+
+  depends_on = [oci_network_load_balancer_backend.traefik_dns_udp_nodes]
 }
 
 resource "oci_network_load_balancer_listener" "http" {

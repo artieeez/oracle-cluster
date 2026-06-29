@@ -78,6 +78,16 @@ output "sitio_backend_repository_url" {
   value       = "${var.region}.ocir.io/${data.oci_objectstorage_namespace.this.namespace}/${oci_artifacts_container_repository.sitio_backend.display_name}"
 }
 
+output "fbd_ecommerce_repository_name" {
+  description = "OCI Container Registry repository name for fbd-ecommerce."
+  value       = oci_artifacts_container_repository.fbd_ecommerce.display_name
+}
+
+output "fbd_ecommerce_repository_url" {
+  description = "OCI Container Registry repository URL for fbd-ecommerce."
+  value       = "${var.region}.ocir.io/${data.oci_objectstorage_namespace.this.namespace}/${oci_artifacts_container_repository.fbd_ecommerce.display_name}"
+}
+
 output "backup_bucket_name" {
   description = "Name of the Object Storage bucket for PostgreSQL backups."
   value       = oci_objectstorage_bucket.postgres_backups.name
