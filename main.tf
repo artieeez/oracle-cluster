@@ -82,3 +82,9 @@ resource "oci_artifacts_container_repository" "fbd_ecommerce" {
   display_name   = "fbd-ecommerce"
   is_public      = false
 }
+
+resource "oci_artifacts_container_repository" "home" {
+  compartment_id = var.tenancy_ocid
+  display_name   = "home"
+  is_public      = false
+}
