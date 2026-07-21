@@ -78,6 +78,16 @@ output "sitio_backend_repository_url" {
   value       = "${var.region}.ocir.io/${data.oci_objectstorage_namespace.this.namespace}/${oci_artifacts_container_repository.sitio_backend.display_name}"
 }
 
+output "sitio_rails_repository_name" {
+  description = "OCI Container Registry repository name for sitio-rails."
+  value       = oci_artifacts_container_repository.sitio_rails.display_name
+}
+
+output "sitio_rails_repository_url" {
+  description = "OCI Container Registry repository URL for sitio-rails."
+  value       = "${var.region}.ocir.io/${data.oci_objectstorage_namespace.this.namespace}/${oci_artifacts_container_repository.sitio_rails.display_name}"
+}
+
 output "fbd_ecommerce_repository_name" {
   description = "OCI Container Registry repository name for fbd-ecommerce."
   value       = oci_artifacts_container_repository.fbd_ecommerce.display_name

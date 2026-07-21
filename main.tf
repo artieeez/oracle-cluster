@@ -71,6 +71,12 @@ resource "oci_artifacts_container_repository" "sitio_backend" {
   is_public      = false
 }
 
+resource "oci_artifacts_container_repository" "sitio_rails" {
+  compartment_id = var.tenancy_ocid
+  display_name   = "sitio-rails"
+  is_public      = false
+}
+
 resource "oci_artifacts_container_repository" "fbd_ecommerce" {
   compartment_id = var.tenancy_ocid
   display_name   = "fbd-ecommerce"
