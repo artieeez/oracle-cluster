@@ -59,27 +59,9 @@ resource "oci_core_volume" "db_volume" {
   }
 }
 
-resource "oci_artifacts_container_repository" "sitio_dashboard" {
-  compartment_id = var.tenancy_ocid
-  display_name   = "sitio-dashboard"
-  is_public      = false
-}
-
-resource "oci_artifacts_container_repository" "sitio_backend" {
-  compartment_id = var.tenancy_ocid
-  display_name   = "sitio-backend"
-  is_public      = false
-}
-
 resource "oci_artifacts_container_repository" "sitio_rails" {
   compartment_id = var.tenancy_ocid
   display_name   = "sitio-rails"
-  is_public      = false
-}
-
-resource "oci_artifacts_container_repository" "fbd_ecommerce" {
-  compartment_id = var.tenancy_ocid
-  display_name   = "fbd-ecommerce"
   is_public      = false
 }
 

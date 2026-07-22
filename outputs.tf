@@ -58,26 +58,6 @@ output "traefik_nlb_public_ip_addresses" {
   value       = module.oke.traefik_nlb_public_ip_addresses
 }
 
-output "sitio_dashboard_repository_name" {
-  description = "OCI Container Registry repository name for sitio-dashboard."
-  value       = oci_artifacts_container_repository.sitio_dashboard.display_name
-}
-
-output "sitio_dashboard_repository_url" {
-  description = "OCI Container Registry repository URL for sitio-dashboard."
-  value       = "${var.region}.ocir.io/${data.oci_objectstorage_namespace.this.namespace}/${oci_artifacts_container_repository.sitio_dashboard.display_name}"
-}
-
-output "sitio_backend_repository_name" {
-  description = "OCI Container Registry repository name for sitio-backend."
-  value       = oci_artifacts_container_repository.sitio_backend.display_name
-}
-
-output "sitio_backend_repository_url" {
-  description = "OCI Container Registry repository URL for sitio-backend."
-  value       = "${var.region}.ocir.io/${data.oci_objectstorage_namespace.this.namespace}/${oci_artifacts_container_repository.sitio_backend.display_name}"
-}
-
 output "sitio_rails_repository_name" {
   description = "OCI Container Registry repository name for sitio-rails."
   value       = oci_artifacts_container_repository.sitio_rails.display_name
@@ -86,16 +66,6 @@ output "sitio_rails_repository_name" {
 output "sitio_rails_repository_url" {
   description = "OCI Container Registry repository URL for sitio-rails."
   value       = "${var.region}.ocir.io/${data.oci_objectstorage_namespace.this.namespace}/${oci_artifacts_container_repository.sitio_rails.display_name}"
-}
-
-output "fbd_ecommerce_repository_name" {
-  description = "OCI Container Registry repository name for fbd-ecommerce."
-  value       = oci_artifacts_container_repository.fbd_ecommerce.display_name
-}
-
-output "fbd_ecommerce_repository_url" {
-  description = "OCI Container Registry repository URL for fbd-ecommerce."
-  value       = "${var.region}.ocir.io/${data.oci_objectstorage_namespace.this.namespace}/${oci_artifacts_container_repository.fbd_ecommerce.display_name}"
 }
 
 output "home_repository_name" {
