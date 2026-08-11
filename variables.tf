@@ -118,4 +118,10 @@ variable "backup_retention_days" {
   default     = 90
 }
 
+variable "state_bucket_name" {
+  description = "Name of the Object Storage bucket for the Terraform state file (private, versioned)."
+  type        = string
+  default     = "oke-cluster-tfstate"
+}
+
 
