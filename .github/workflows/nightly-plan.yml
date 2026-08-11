@@ -30,7 +30,7 @@ jobs:
       TF_VAR_backup_bucket_name: "sitio-production-backups"
       TF_VAR_backup_retention_days: "90"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: hashicorp/setup-terraform@v3
         with:
