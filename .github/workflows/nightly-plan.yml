@@ -13,6 +13,7 @@ jobs:
   plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
+    if: ${{ secrets.OCI_TENANCY_OCID != '' }}
     env:
       TF_IN_AUTOMATION: "true"
       TF_CLI_ARGS: "-no-color"
