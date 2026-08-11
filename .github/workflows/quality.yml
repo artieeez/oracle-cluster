@@ -1,0 +1,46 @@
+name: quality
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: fmt validate tflint trivy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.13.3
+
+      - name: Terraform fmt
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        run: terraform init -backend=false -no-color
+
+      - name: Terraform validate
+        run: terraform validate -no-color
+
+      - name: Setup tflint
+        uses: terraform-linters/setup-tflint@v6.3.0
+
+      - name: TFLint
+        run: tflint -f compact
+
+      - name: Trivy IaC scan
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          skip-dirs: .terraform
+          format: table
+          exit-code: "1"
+          severity: HIGH,CRITICAL

@@ -3,6 +3,7 @@ name: nightly-plan
 on:
   schedule:
     - cron: "0 4 * * *"
+  pull_request:
   workflow_dispatch:
 
 permissions:
