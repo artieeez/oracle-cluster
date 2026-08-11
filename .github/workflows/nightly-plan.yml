@@ -22,6 +22,11 @@ jobs:
       TF_VAR_cluster_name: oke-cluster
       TF_VAR_cost_alert_email: ${{ secrets.COST_ALERT_EMAIL }}
       TF_VAR_slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      TF_VAR_kubernetes_version: "v1.36.1"
+      TF_VAR_api_public_allowed_cidrs: '["189.6.241.123/32", "189.6.246.42/32", "143.54.0.0/16", "191.39.2.131/32"]'
+      TF_VAR_dns_server_allowed_cidrs: '["189.6.241.123/32", "179.68.24.174/32", "189.6.246.42/32"]'
+      TF_VAR_backup_bucket_name: "sitio-production-backups"
+      TF_VAR_backup_retention_days: "90"
     steps:
       - uses: actions/checkout@v4
 
