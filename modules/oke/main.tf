@@ -18,7 +18,6 @@ locals {
   traefik_node_ports = {
     web       = 32080
     websecure = 32443
-    postgres  = 32432
     dns_udp   = 32053
     dns_tcp   = 32054
     dot_tcp   = 31853
@@ -176,21 +175,6 @@ resource "oci_core_network_security_group_security_rule" "traefik_nlb_https_ingr
     destination_port_range {
       min = 443
       max = 443
-    }
-  }
-}
-
-resource "oci_core_network_security_group_security_rule" "traefik_nlb_postgres_ingress" {
-  network_security_group_id = oci_core_network_security_group.traefik_nlb.id
-  direction                 = "INGRESS"
-  protocol                  = "6"
-  source                    = "0.0.0.0/0"
-  source_type               = "CIDR_BLOCK"
-
-  tcp_options {
-    destination_port_range {
-      min = 5432
-      max = 5432
     }
   }
 }
@@ -363,19 +347,6 @@ resource "oci_network_load_balancer_backend_set" "traefik_https" {
   depends_on = [oci_network_load_balancer_backend_set.traefik_http]
 }
 
-resource "oci_network_load_balancer_backend_set" "traefik_postgres" {
-  name                     = "traefik-postgres-backendset"
-  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
-  policy                   = "FIVE_TUPLE"
-
-  health_checker {
-    protocol = "TCP"
-    port     = local.traefik_node_ports.postgres
-  }
-
-  depends_on = [oci_network_load_balancer_backend_set.traefik_https]
-}
-
 resource "oci_network_load_balancer_backend_set" "traefik_dns_tcp" {
   name                     = "traefik-dns-tcp-backendset"
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
@@ -386,7 +357,7 @@ resource "oci_network_load_balancer_backend_set" "traefik_dns_tcp" {
     port     = local.traefik_node_ports.dns_tcp
   }
 
-  depends_on = [oci_network_load_balancer_backend_set.traefik_postgres]
+  depends_on = [oci_network_load_balancer_backend_set.traefik_https]
 }
 
 resource "oci_network_load_balancer_backend_set" "traefik_dns_udp" {
@@ -418,7 +389,7 @@ resource "oci_network_load_balancer_backend_set" "traefik_dot_tcp" {
 }
 
 resource "oci_network_load_balancer_backend" "traefik_http_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null && node.state != "DELETED" }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_http.name
   ip_address               = each.value
@@ -426,7 +397,7 @@ resource "oci_network_load_balancer_backend" "traefik_http_nodes" {
 }
 
 resource "oci_network_load_balancer_backend" "traefik_https_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null && node.state != "DELETED" }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_https.name
   ip_address               = each.value
@@ -436,28 +407,18 @@ resource "oci_network_load_balancer_backend" "traefik_https_nodes" {
   depends_on = [oci_network_load_balancer_backend.traefik_http_nodes]
 }
 
-resource "oci_network_load_balancer_backend" "traefik_postgres_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
-  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
-  backend_set_name         = oci_network_load_balancer_backend_set.traefik_postgres.name
-  ip_address               = each.value
-  port                     = local.traefik_node_ports.postgres
-
-  depends_on = [oci_network_load_balancer_backend.traefik_https_nodes]
-}
-
 resource "oci_network_load_balancer_backend" "traefik_dns_tcp_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null && node.state != "DELETED" }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_dns_tcp.name
   ip_address               = each.value
   port                     = local.traefik_node_ports.dns_tcp
 
-  depends_on = [oci_network_load_balancer_backend.traefik_postgres_nodes]
+  depends_on = [oci_network_load_balancer_backend.traefik_https_nodes]
 }
 
 resource "oci_network_load_balancer_backend" "traefik_dns_udp_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null && node.state != "DELETED" }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_dns_udp.name
   ip_address               = each.value
@@ -467,7 +428,7 @@ resource "oci_network_load_balancer_backend" "traefik_dns_udp_nodes" {
 }
 
 resource "oci_network_load_balancer_backend" "traefik_dot_tcp_nodes" {
-  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null }
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null && node.state != "DELETED" }
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
   backend_set_name         = oci_network_load_balancer_backend_set.traefik_dot_tcp.name
   ip_address               = each.value
@@ -486,7 +447,6 @@ resource "oci_network_load_balancer_listener" "http" {
   depends_on = [
     oci_network_load_balancer_backend_set.traefik_http,
     oci_network_load_balancer_backend_set.traefik_https,
-    oci_network_load_balancer_backend_set.traefik_postgres,
     oci_network_load_balancer_backend_set.traefik_dns_tcp,
     oci_network_load_balancer_backend_set.traefik_dns_udp,
     oci_network_load_balancer_backend_set.traefik_dot_tcp
@@ -503,24 +463,6 @@ resource "oci_network_load_balancer_listener" "https" {
   depends_on = [
     oci_network_load_balancer_backend_set.traefik_http,
     oci_network_load_balancer_backend_set.traefik_https,
-    oci_network_load_balancer_backend_set.traefik_postgres,
-    oci_network_load_balancer_backend_set.traefik_dns_tcp,
-    oci_network_load_balancer_backend_set.traefik_dns_udp,
-    oci_network_load_balancer_backend_set.traefik_dot_tcp
-  ]
-}
-
-resource "oci_network_load_balancer_listener" "postgres" {
-  name                     = "postgres-5432"
-  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
-  default_backend_set_name = oci_network_load_balancer_backend_set.traefik_postgres.name
-  port                     = 5432
-  protocol                 = "TCP"
-
-  depends_on = [
-    oci_network_load_balancer_backend_set.traefik_http,
-    oci_network_load_balancer_backend_set.traefik_https,
-    oci_network_load_balancer_backend_set.traefik_postgres,
     oci_network_load_balancer_backend_set.traefik_dns_tcp,
     oci_network_load_balancer_backend_set.traefik_dns_udp,
     oci_network_load_balancer_backend_set.traefik_dot_tcp
@@ -537,7 +479,6 @@ resource "oci_network_load_balancer_listener" "dns_tcp" {
   depends_on = [
     oci_network_load_balancer_backend_set.traefik_http,
     oci_network_load_balancer_backend_set.traefik_https,
-    oci_network_load_balancer_backend_set.traefik_postgres,
     oci_network_load_balancer_backend_set.traefik_dns_tcp,
     oci_network_load_balancer_backend_set.traefik_dns_udp,
     oci_network_load_balancer_backend_set.traefik_dot_tcp
@@ -554,7 +495,6 @@ resource "oci_network_load_balancer_listener" "dns_udp" {
   depends_on = [
     oci_network_load_balancer_backend_set.traefik_http,
     oci_network_load_balancer_backend_set.traefik_https,
-    oci_network_load_balancer_backend_set.traefik_postgres,
     oci_network_load_balancer_backend_set.traefik_dns_tcp,
     oci_network_load_balancer_backend_set.traefik_dns_udp,
     oci_network_load_balancer_backend_set.traefik_dot_tcp
@@ -571,7 +511,6 @@ resource "oci_network_load_balancer_listener" "dot_tcp" {
   depends_on = [
     oci_network_load_balancer_backend_set.traefik_http,
     oci_network_load_balancer_backend_set.traefik_https,
-    oci_network_load_balancer_backend_set.traefik_postgres,
     oci_network_load_balancer_backend_set.traefik_dns_tcp,
     oci_network_load_balancer_backend_set.traefik_dns_udp,
     oci_network_load_balancer_backend_set.traefik_dot_tcp
