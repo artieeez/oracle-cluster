@@ -121,18 +121,6 @@ resource "oci_core_security_list" "public_api" {
     }
   }
 
-  # Traefik PostgreSQL TCP listener.
-  ingress_security_rules {
-    protocol    = "6"
-    source      = "0.0.0.0/0"
-    source_type = "CIDR_BLOCK"
-
-    tcp_options {
-      min = 5432
-      max = 5432
-    }
-  }
-
   # Pi-hole DNS via same NLB (Traefik dnsudp/dnstcp): restrict sources; no 0.0.0.0/0 rule here.
   dynamic "ingress_security_rules" {
     for_each = toset(var.dns_server_allowed_cidrs)
