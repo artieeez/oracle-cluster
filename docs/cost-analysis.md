@@ -43,6 +43,7 @@ monthly_compute = node_hourly * node_pool_size * hours_per_month
 ```
 
 Notes:
+
 - Shape is `VM.Standard.A1.Flex` with 2 OCPU and 12 GB RAM per node.
 - If total OCPU <= 4 and total RAM <= 24 GB in `us-ashburn-1`, compute can be free.
 - If you scale the node pool above free tier limits, costs scale linearly.
@@ -56,6 +57,7 @@ monthly_boot_volumes = boot_volume_gb * boot_volume_price_per_gb_month * node_po
 ```
 
 Notes:
+
 - Check actual boot volume size in the OCI console for the node pool.
 - In `us-ashburn-1`, boot volumes count toward the 200 GB block storage free tier.
 
@@ -69,6 +71,7 @@ monthly_nat = nat_hourly_price * hours_per_month
 ```
 
 Notes:
+
 - Any egress from private subnet to the internet goes through NAT.
 
 ### 4) Public IP (reserved)

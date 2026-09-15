@@ -159,7 +159,7 @@ Expected output: Updated `.notebook/` with new intelligence, or explicit decisio
 
 You don't work alone. Before struggling with a task, check your allies.
 
-### Priority order for summoning help:
+### Priority order for summoning help
 
 1. **Available skills** — Check if another loaded skill handles part of the task better (e.g., a skill for creating documents, a skill for specific frameworks). Use `view` on the available skills list if unsure.
 
@@ -168,9 +168,9 @@ You don't work alone. Before struggling with a task, check your allies.
 - **Context7** → current documentation for any library or framework. Always prefer this for doc lookups.
 - **Any other connected MCP** that provides relevant capabilities.
 
-3. **Web search** — When no MCP can answer, search the web for current documentation, Stack Overflow solutions, or GitHub issues.
+1. **Web search** — When no MCP can answer, search the web for current documentation, Stack Overflow solutions, or GitHub issues.
 
-4. **Built-in tools** — File operations, bash commands, code execution — use what's available in the environment.
+2. **Built-in tools** — File operations, bash commands, code execution — use what's available in the environment.
 
 ### Knowledge Verification Chain
 
