@@ -3,20 +3,24 @@
 This repository contains Terraform code to create an OKE cluster with a node pool in the Oracle Cloud Infrastructure (OCI).
 
 ## Setup summary
+
 Setting up the cluster consists of:
 
 Prerequisites:
+
 - Oracle Cloud account in your target region
 - Terraform installed
 - OCI CLI installed
 
 Steps:
+
 - Fill `terraform.tfvars`
 - Run `terraform init`
 - Apply resources with `terraform apply`
 - Configure kubectl access
 
 ## Authentication (recommended)
+
 Use the OCI CLI to create the `~/.oci/config` profile and keys that Terraform uses.
 
 1. Install the OCI CLI:
@@ -30,6 +34,7 @@ Use the OCI CLI to create the `~/.oci/config` profile and keys that Terraform us
 Terraform will read the profile from `~/.oci/config` (default profile name is `DEFAULT`).
 
 ## Run Terraform
+
 Example:
 
 ```
@@ -43,6 +48,7 @@ terraform plan \
 ```
 
 ## Configure kubectl
+
 Generate kubeconfig using the cluster output:
 
 ```
@@ -67,4 +73,5 @@ kubectl config rename-context <old_context_name> <new_context_name>
 ```
 
 ## Additional documentation
+
 - https://docs.oracle.com/en-us/iaas/Content/ContEng/Tasks/contengcreatingclusterkm.htm
