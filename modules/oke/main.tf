@@ -22,6 +22,10 @@ locals {
     dns_tcp   = 32054
     dot_tcp   = 31853
   }
+  # Games workloads ride the same NLB (reserved public IP, *.artr.com.br) through
+  # dedicated TCP listeners instead of Traefik. Must match the Service nodePort in
+  # artr-gitops apps/games/minecraft/service.yaml.
+  minecraft_node_port = 30565
 }
 
 resource "oci_core_network_security_group" "endpoint" {
@@ -227,6 +231,21 @@ resource "oci_core_network_security_group_security_rule" "traefik_nlb_dot_tcp_in
   }
 }
 
+resource "oci_core_network_security_group_security_rule" "traefik_nlb_minecraft_ingress" {
+  network_security_group_id = oci_core_network_security_group.traefik_nlb.id
+  direction                 = "INGRESS"
+  protocol                  = "6"
+  source                    = "0.0.0.0/0"
+  source_type               = "CIDR_BLOCK"
+
+  tcp_options {
+    destination_port_range {
+      min = 25565
+      max = 25565
+    }
+  }
+}
+
 resource "oci_core_network_security_group_security_rule" "traefik_nlb_egress" {
   network_security_group_id = oci_core_network_security_group.traefik_nlb.id
   direction                 = "EGRESS"
@@ -375,6 +394,21 @@ resource "oci_network_load_balancer_backend_set" "traefik_dns_udp" {
   depends_on = [oci_network_load_balancer_backend_set.traefik_dns_tcp]
 }
 
+resource "oci_network_load_balancer_backend_set" "minecraft" {
+  name                     = "minecraft-backendset"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  policy                   = "FIVE_TUPLE"
+
+  # NodePort accepts connections only once the minecraft pod is Ready, so a TCP
+  # probe on the NodePort doubles as a real game-port health check.
+  health_checker {
+    protocol = "TCP"
+    port     = local.minecraft_node_port
+  }
+
+  depends_on = [oci_network_load_balancer_backend_set.traefik_dot_tcp]
+}
+
 resource "oci_network_load_balancer_backend_set" "traefik_dot_tcp" {
   name                     = "traefik-dot-tcp-backendset"
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
@@ -437,6 +471,16 @@ resource "oci_network_load_balancer_backend" "traefik_dot_tcp_nodes" {
   depends_on = [oci_network_load_balancer_backend.traefik_dns_udp_nodes]
 }
 
+resource "oci_network_load_balancer_backend" "minecraft_nodes" {
+  for_each                 = { for node in oci_containerengine_node_pool.oke.nodes : node.id => node.private_ip if node.private_ip != null && node.state != "DELETED" }
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  backend_set_name         = oci_network_load_balancer_backend_set.minecraft.name
+  ip_address               = each.value
+  port                     = local.minecraft_node_port
+
+  depends_on = [oci_network_load_balancer_backend.traefik_dot_tcp_nodes]
+}
+
 resource "oci_network_load_balancer_listener" "http" {
   name                     = "http-80"
   network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
@@ -449,7 +493,8 @@ resource "oci_network_load_balancer_listener" "http" {
     oci_network_load_balancer_backend_set.traefik_https,
     oci_network_load_balancer_backend_set.traefik_dns_tcp,
     oci_network_load_balancer_backend_set.traefik_dns_udp,
-    oci_network_load_balancer_backend_set.traefik_dot_tcp
+    oci_network_load_balancer_backend_set.traefik_dot_tcp,
+    oci_network_load_balancer_backend_set.minecraft
   ]
 }
 
@@ -465,7 +510,8 @@ resource "oci_network_load_balancer_listener" "https" {
     oci_network_load_balancer_backend_set.traefik_https,
     oci_network_load_balancer_backend_set.traefik_dns_tcp,
     oci_network_load_balancer_backend_set.traefik_dns_udp,
-    oci_network_load_balancer_backend_set.traefik_dot_tcp
+    oci_network_load_balancer_backend_set.traefik_dot_tcp,
+    oci_network_load_balancer_backend_set.minecraft
   ]
 }
 
@@ -481,7 +527,8 @@ resource "oci_network_load_balancer_listener" "dns_tcp" {
     oci_network_load_balancer_backend_set.traefik_https,
     oci_network_load_balancer_backend_set.traefik_dns_tcp,
     oci_network_load_balancer_backend_set.traefik_dns_udp,
-    oci_network_load_balancer_backend_set.traefik_dot_tcp
+    oci_network_load_balancer_backend_set.traefik_dot_tcp,
+    oci_network_load_balancer_backend_set.minecraft
   ]
 }
 
@@ -497,7 +544,8 @@ resource "oci_network_load_balancer_listener" "dns_udp" {
     oci_network_load_balancer_backend_set.traefik_https,
     oci_network_load_balancer_backend_set.traefik_dns_tcp,
     oci_network_load_balancer_backend_set.traefik_dns_udp,
-    oci_network_load_balancer_backend_set.traefik_dot_tcp
+    oci_network_load_balancer_backend_set.traefik_dot_tcp,
+    oci_network_load_balancer_backend_set.minecraft
   ]
 }
 
@@ -513,6 +561,24 @@ resource "oci_network_load_balancer_listener" "dot_tcp" {
     oci_network_load_balancer_backend_set.traefik_https,
     oci_network_load_balancer_backend_set.traefik_dns_tcp,
     oci_network_load_balancer_backend_set.traefik_dns_udp,
-    oci_network_load_balancer_backend_set.traefik_dot_tcp
+    oci_network_load_balancer_backend_set.traefik_dot_tcp,
+    oci_network_load_balancer_backend_set.minecraft
+  ]
+}
+
+resource "oci_network_load_balancer_listener" "minecraft" {
+  name                     = "minecraft-tcp-25565"
+  network_load_balancer_id = oci_network_load_balancer_network_load_balancer.traefik.id
+  default_backend_set_name = oci_network_load_balancer_backend_set.minecraft.name
+  port                     = 25565
+  protocol                 = "TCP"
+
+  depends_on = [
+    oci_network_load_balancer_backend_set.traefik_http,
+    oci_network_load_balancer_backend_set.traefik_https,
+    oci_network_load_balancer_backend_set.traefik_dns_tcp,
+    oci_network_load_balancer_backend_set.traefik_dns_udp,
+    oci_network_load_balancer_backend_set.traefik_dot_tcp,
+    oci_network_load_balancer_backend_set.minecraft
   ]
 }
