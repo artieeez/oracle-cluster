@@ -266,6 +266,19 @@ resource "oci_containerengine_node_pool" "oke" {
     boot_volume_size_in_gbs = var.node_boot_volume_size_gbs
   }
 
+  # The node image ships an LVM layout sized for the image, not for
+  # boot_volume_size_in_gbs: sda3 stays at ~45.5 GiB inside a larger boot volume,
+  # so the extra space is never allocated and "/" keeps filling up until kubelet
+  # evicts pods on imagefs.available < 15%. The image does not grow the partition
+  # and neither does OKE, so every replacement node starts with the gap again.
+  #
+  # user_data must be base64-encoded cloud-init and it *replaces* the image's
+  # default user data, so the payload runs the OKE init script itself after the
+  # growth step. See docs/adr/002-node-boot-partition-autogrow.md.
+  node_metadata = {
+    user_data = base64encode(file("${path.module}/files/node_boot_grow.sh"))
+  }
+
   node_config_details {
     size    = var.node_pool_size
     nsg_ids = [oci_core_network_security_group.nodes.id]
