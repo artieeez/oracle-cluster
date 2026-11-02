@@ -68,11 +68,6 @@ variable "ssh_allowed_cidrs" {
   type        = list(string)
 }
 
-variable "dns_server_allowed_cidrs" {
-  description = "CIDR blocks allowed to reach DNS listeners (TCP/UDP 53) on the Terraform-managed NLB."
-  type        = list(string)
-}
-
 variable "node_boot_volume_size_gbs" {
   description = "Boot volume size in GB for each node in the pool."
   type        = number

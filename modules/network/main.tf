@@ -121,34 +121,9 @@ resource "oci_core_security_list" "public_api" {
     }
   }
 
-  # Pi-hole DNS via same NLB (Traefik dnsudp/dnstcp): restrict sources; no 0.0.0.0/0 rule here.
-  dynamic "ingress_security_rules" {
-    for_each = toset(var.dns_server_allowed_cidrs)
-    content {
-      protocol    = "6"
-      source      = ingress_security_rules.value
-      source_type = "CIDR_BLOCK"
-
-      tcp_options {
-        min = 53
-        max = 53
-      }
-    }
-  }
-
-  dynamic "ingress_security_rules" {
-    for_each = toset(var.dns_server_allowed_cidrs)
-    content {
-      protocol    = "17"
-      source      = ingress_security_rules.value
-      source_type = "CIDR_BLOCK"
-
-      udp_options {
-        min = 53
-        max = 53
-      }
-    }
-  }
+  # Pi-hole DNS (53/TCP, 53/UDP) and DoT (853) are intentionally absent: the NLB no
+  # longer publishes them and clients resolve through the tailnet instead.
+  # See docs/adr/002-close-public-dns.md.
 }
 
 resource "oci_core_security_list" "nodeports" {
