@@ -40,3 +40,31 @@ resource "oci_objectstorage_object_lifecycle_policy" "postgres_backups" {
     time_unit   = "DAYS"
   }
 }
+
+# Nightly per-app backups (pocketid, tinyauth, home, hermes, minecraft) pushed
+# by CronJobs in artr-gitops. Standard tier, not Archive: these are short-lived
+# (Archive bills a 90-day minimum per object) and must restore in minutes.
+# Kept small enough to stay inside the Always Free 20 GB of Object Storage.
+resource "oci_objectstorage_bucket" "app_backups" {
+  compartment_id = var.tenancy_ocid
+  namespace      = data.oci_objectstorage_namespace.this.namespace
+  name           = var.app_backup_bucket_name
+  storage_tier   = "Standard"
+  access_type    = "NoPublicAccess"
+}
+
+resource "oci_objectstorage_object_lifecycle_policy" "app_backups" {
+  depends_on = [time_sleep.policy_propagation]
+
+  namespace = data.oci_objectstorage_namespace.this.namespace
+  bucket    = oci_objectstorage_bucket.app_backups.name
+
+  rules {
+    name       = "delete-old-backups"
+    action     = "DELETE"
+    is_enabled = true
+
+    time_amount = var.app_backup_retention_days
+    time_unit   = "DAYS"
+  }
+}

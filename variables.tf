@@ -108,6 +108,18 @@ variable "backup_retention_days" {
   default     = 90
 }
 
+variable "app_backup_bucket_name" {
+  description = "Name of the Standard-tier Object Storage bucket for nightly per-app backups."
+  type        = string
+  default     = "cluster-app-backups"
+}
+
+variable "app_backup_retention_days" {
+  description = "Days to keep per-app backup objects before automatic deletion."
+  type        = number
+  default     = 14
+}
+
 variable "state_bucket_name" {
   description = "Name of the Object Storage bucket for the Terraform state file (private, versioned)."
   type        = string

@@ -92,3 +92,8 @@ output "backup_bucket_namespace" {
   description = "Object Storage namespace for S3-compatible API access."
   value       = data.oci_objectstorage_namespace.this.namespace
 }
+
+output "app_backup_bucket_name" {
+  description = "Object Storage bucket for nightly per-app backups."
+  value       = oci_objectstorage_bucket.app_backups.name
+}
