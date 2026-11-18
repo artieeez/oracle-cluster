@@ -21,3 +21,6 @@ node_pool_size = 2
 # PostgreSQL backup bucket configuration
 backup_bucket_name    = "sitio-production-backups"
 backup_retention_days = 90
+
+# Primary email for the app-backup service user (OCI Identity Domains requires one)
+# app_backup_writer_email = "you+oke-backup@example.com"
