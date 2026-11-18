@@ -16,6 +16,8 @@ resource "oci_identity_user" "app_backup_writer" {
   compartment_id = var.tenancy_ocid
   name           = "${var.cluster_name}-app-backup-writer"
   description    = "Service user for cluster per-app backup CronJobs (S3 API, append-only)."
+  # Identity Domains tenancies require a primary email on every user.
+  email = var.app_backup_writer_email
 }
 
 resource "oci_identity_group" "app_backup_writers" {

@@ -120,6 +120,12 @@ variable "app_backup_retention_days" {
   default     = 14
 }
 
+variable "app_backup_writer_email" {
+  description = "Primary email for the app-backup service user (required by OCI Identity Domains). Set it in terraform.tfvars; keep it out of git."
+  type        = string
+  default     = null
+}
+
 variable "state_bucket_name" {
   description = "Name of the Object Storage bucket for the Terraform state file (private, versioned)."
   type        = string
