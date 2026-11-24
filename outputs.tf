@@ -97,3 +97,11 @@ output "app_backup_bucket_name" {
   description = "Object Storage bucket for nightly per-app backups."
   value       = oci_objectstorage_bucket.app_backups.name
 }
+
+output "code_factory_repository_urls" {
+  description = "OCI Container Registry repository URLs for code-factory, by repository name."
+  value = {
+    for name, repo in oci_artifacts_container_repository.code_factory :
+    name => "${var.region}.ocir.io/${data.oci_objectstorage_namespace.this.namespace}/${repo.display_name}"
+  }
+}
