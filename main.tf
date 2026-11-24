@@ -68,3 +68,13 @@ resource "oci_artifacts_container_repository" "home" {
   display_name   = "home"
   is_public      = false
 }
+
+# artieeez/code-factory images, pushed by its deploy.yml and deploy-workers.yml: the server, the
+# dashboard and one worker image per workflow (cf-worker-<workflow>)
+resource "oci_artifacts_container_repository" "code_factory" {
+  for_each = toset(["cf-server", "cf-dashboard", "cf-worker-dogfood"])
+
+  compartment_id = var.tenancy_ocid
+  display_name   = each.key
+  is_public      = false
+}
