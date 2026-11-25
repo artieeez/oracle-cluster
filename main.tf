@@ -69,10 +69,20 @@ resource "oci_artifacts_container_repository" "home" {
   is_public      = false
 }
 
-# artieeez/code-factory images, pushed by its deploy.yml and deploy-workers.yml: the server, the
-# dashboard and one worker image per workflow (cf-worker-<workflow>)
+# code-factory images. artieeez/code-factory's deploy.yml pushes the server and the dashboard.
+# Each workflow's worker image (cf-worker-<workflow>) is built by its own repo:
+# artieeez/cf-dogfood-worker (cf-worker-dogfood), artieeez/pr-assistant-worker
+# (cf-worker-pr-assistant) and artieeez/cf-sdd-worker (cf-worker-sdd).
+# artieeez/cf-playground-dashboard pushes cf-playground-dashboard.
 resource "oci_artifacts_container_repository" "code_factory" {
-  for_each = toset(["cf-server", "cf-dashboard", "cf-worker-dogfood"])
+  for_each = toset([
+    "cf-server",
+    "cf-dashboard",
+    "cf-worker-dogfood",
+    "cf-worker-pr-assistant",
+    "cf-worker-sdd",
+    "cf-playground-dashboard",
+  ])
 
   compartment_id = var.tenancy_ocid
   display_name   = each.key
