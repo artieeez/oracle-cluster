@@ -69,11 +69,11 @@ resource "oci_artifacts_container_repository" "home" {
   is_public      = false
 }
 
-# code-factory images. artieeez/code-factory's deploy.yml pushes the server and the dashboard.
-# Each workflow's worker image (cf-worker-<workflow>) is built by its own repo:
+# code-factory images. artieeez/cf-ci-worker's deploy-main workflow pushes the server and the
+# dashboard. Each workflow's worker image (cf-worker-<workflow>) is built by its own repo:
 # artieeez/cf-dogfood-worker (cf-worker-dogfood), artieeez/pr-assistant-worker
-# (cf-worker-pr-assistant) and artieeez/cf-sdd-worker (cf-worker-sdd).
-# artieeez/cf-playground-dashboard pushes cf-playground-dashboard.
+# (cf-worker-pr-assistant), artieeez/cf-sdd-worker (cf-worker-sdd) and artieeez/cf-ci-worker
+# (cf-worker-ci). artieeez/cf-playground-dashboard pushes cf-playground-dashboard.
 resource "oci_artifacts_container_repository" "code_factory" {
   for_each = toset([
     "cf-server",
@@ -81,6 +81,7 @@ resource "oci_artifacts_container_repository" "code_factory" {
     "cf-worker-dogfood",
     "cf-worker-pr-assistant",
     "cf-worker-sdd",
+    "cf-worker-ci",
     "cf-playground-dashboard",
   ])
 
